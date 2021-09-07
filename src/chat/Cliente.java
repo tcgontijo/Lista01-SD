@@ -20,8 +20,17 @@ public class Cliente extends Thread {
 			conexao = new Socket("localhost", 2000);
 			PrintStream saida = new PrintStream(conexao.getOutputStream());
 			BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
-			System.out.print("Entre com o seu nome: ");
-			String meuNome = teclado.readLine();
+			String meuNome;
+			
+			while (true) {
+				System.out.print("Entre com o seu nome: ");
+				meuNome = teclado.readLine();
+				if (!meuNome.equals("")) {
+					break;
+				}
+				System.err.println("O nome nao deve ser vazio!");
+			}
+			
 			saida.println(meuNome);
 			Thread t = new Cliente(conexao);
 			t.start();
