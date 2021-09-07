@@ -39,9 +39,11 @@ public class Cliente extends Thread {
 				if (done) {
 					break;
 				}
+				System.out.println("ESTÁ NO WHILE");
 				System.out.print("> ");
 				linha = teclado.readLine();
 				saida.println(linha);
+				
 			}
 
 		} catch (IOException ex) {
@@ -50,6 +52,7 @@ public class Cliente extends Thread {
 	}
 
 	public void run() {
+		System.out.println("ENTROU NO RUN");
 		try {
 			BufferedReader entrada = new BufferedReader(new InputStreamReader(conexao.getInputStream()));
 			String linha;

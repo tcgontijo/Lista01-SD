@@ -66,7 +66,7 @@ public class Servidor extends Thread {
 		for (PrintStream chat : clientes) {
 			//PrintStream chat = (PrintStream) e.nextElement();
 			if (chat != saida) {
-				chat.println(meuNome + acao + linha);
+				chat.println("[" + meuNome + "]" + acao + linha);
 			}
 			if (acao.equals(" saiu ")) {
 				if (chat == saida)

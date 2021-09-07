@@ -18,6 +18,13 @@ import java.net.*;
 import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JScrollPane;
+import javax.swing.JList;
+import javax.swing.AbstractListModel;
+import java.awt.Color;
+import javax.swing.ListSelectionModel;
+import javax.swing.JScrollBar;
+import java.awt.TextArea;
 
 public class Test extends Thread {
 
@@ -28,33 +35,38 @@ public class Test extends Thread {
 	private JFrame frameGetName;
 	private JFrame frameError;
 	private JTextField textField;
-	public JTextField textName;
+	private JTextField textName;
 	private Socket connection;
+	private TextArea textArea;
+	
+	PrintStream output;
 	
 	public Test() {
+		try {
+			this.connection = new Socket("localhost", 2000);
+			this.output = new PrintStream(this.connection.getOutputStream());
+		} catch (IOException ex) {
+			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		
 		initialize();
 	}
 	
-	public Test(boolean flag) {
-		if (flag) {
-			logic();
-		}
-	}
-	
-	public Test(Socket socket) {
-		connection = socket;
-	}
+//	public Test(Socket connection) {
+//		this.connection = connection;
+//		try {
+//			this.output = new PrintStream(this.connection.getOutputStream());
+//		} catch (IOException ex) {
+//			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+//		}
+//	}
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-//					window = new Test();
-//					window.frameGetName.setVisible(true);
-					
 					window = new Test();
 					window.frameGetName.setVisible(true);
-					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -62,46 +74,54 @@ public class Test extends Thread {
 		});
 	}
 	
-	public void logic() {
-		Socket connection;
-		try {
-			connection = new Socket("localhost", 2000);
-			PrintStream saida = new PrintStream(connection.getOutputStream());
-			String meuNome = textName.getText();
+	public void logic(String text, boolean flag) {
+//		Socket connection;
+//		try {
+//			PrintStream output = new PrintStream(connection.getOutputStream());
 			
-			saida.println(meuNome);
-			
-			System.out.println("AQUI -> " + meuNome);
-			Thread t = new Test(connection);
-			t.start();
-			String linha;
-//			while (true) {
-//				if (done) {
-//					break;
-//				}
-//				System.out.print("> ");
-//				linha = teclado.readLine();
-//				saida.println(linha);
-//			}
+				String myName = text;		
+				
+				output.println(myName);
+				
+				window.start();
 
-		} catch (IOException ex) {
-			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
-		}
+//			String line = text;
+//			output.println(line);
+//		} catch (IOException ex) {
+//			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+//		}
+	}
+	
+	public void getText(String text) {
+		String line = text;
+		this.output.println(line);
+		
+		String oldText = this.textArea.getText();
+		
+		oldText += System.lineSeparator() + "[Você] disse:" + line;
+		this.textArea.setText(oldText);
 	}
 	
 	public void run() {
 		try {
-			BufferedReader entrada = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			String linha;
+			BufferedReader input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
+			String line;
+			
 			while (true) {
-				linha = entrada.readLine();
-				if (linha.trim().equals("")) {
+				line = input.readLine();
+				
+				if (line.trim().equals("")) {
 					System.out.println("Conexao encerrada!!!");
 					break;
 				}
+				
+				String oldText = this.textArea.getText();
+				
+				oldText += System.lineSeparator() + line; 
+				
+				this.textArea.setText(oldText);
 				System.out.println();
-				System.out.println(linha);
-				System.out.print("...> ");
+				System.out.println(line);
 			}
 			done = true;
 		} catch (IOException ex) {
@@ -135,7 +155,7 @@ public class Test extends Thread {
 				} else {
 					window.frameGetName.setVisible(false);
 					window.frameChat.setVisible(true);		
-					new Test(true);
+					logic(textName.getText(), true);
 				}
 			}
 		});
@@ -188,11 +208,6 @@ public class Test extends Thread {
 		labelInput.setBounds(24, 262, 87, 16);
 		frameChat.getContentPane().add(labelInput);
 		
-		JTextPane textPane = new JTextPane();
-		textPane.setEditable(false);
-		textPane.setBounds(24, 37, 416, 180);
-		frameChat.getContentPane().add(textPane);
-		
 		JComboBox comboBox = new JComboBox();
 		comboBox.setModel(new DefaultComboBoxModel(new String[] {"TESTE 1", "TESTE 2", "TESTE 3"}));
 		comboBox.setBounds(109, 230, 150, 20);
@@ -204,8 +219,22 @@ public class Test extends Thread {
 		textField.setColumns(10);
 		
 		JButton btnNewButton = new JButton("Enviar");
+		btnNewButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				getText(textField.getText());
+				textField.setText("");
+			}
+		});
 		btnNewButton.setFont(new Font("Arial", Font.PLAIN, 14));
 		btnNewButton.setBounds(351, 260, 89, 22);
 		frameChat.getContentPane().add(btnNewButton);
+		
+		textArea = new TextArea();
+		textArea.setFont(new Font("Arial", Font.PLAIN, 12));
+		textArea.setForeground(Color.BLACK);
+		textArea.setEditable(false);
+		textArea.setBounds(24, 37, 416, 180);
+		frameChat.getContentPane().add(textArea);
 	}
 }
