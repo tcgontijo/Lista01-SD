@@ -14,30 +14,99 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingConstants;
 
-public class Test {
+import java.net.*;
+import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+public class Test extends Thread {
+
+	private static boolean done = false;
+	
 	private static Test window;
 	private JFrame frameChat;
 	private JFrame frameGetName;
 	private JFrame frameError;
 	private JTextField textField;
-	private JTextField textName;
+	public JTextField textName;
+	private Socket connection;
+	
+	public Test() {
+		initialize();
+	}
+	
+	public Test(boolean flag) {
+		if (flag) {
+			logic();
+		}
+	}
+	
+	public Test(Socket socket) {
+		connection = socket;
+	}
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+//					window = new Test();
+//					window.frameGetName.setVisible(true);
+					
 					window = new Test();
 					window.frameGetName.setVisible(true);
+					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		});
 	}
+	
+	public void logic() {
+		Socket connection;
+		try {
+			connection = new Socket("localhost", 2000);
+			PrintStream saida = new PrintStream(connection.getOutputStream());
+			String meuNome = textName.getText();
+			
+			saida.println(meuNome);
+			
+			System.out.println("AQUI -> " + meuNome);
+			Thread t = new Test(connection);
+			t.start();
+			String linha;
+//			while (true) {
+//				if (done) {
+//					break;
+//				}
+//				System.out.print("> ");
+//				linha = teclado.readLine();
+//				saida.println(linha);
+//			}
 
-	public Test() {
-		initialize();
+		} catch (IOException ex) {
+			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+	
+	public void run() {
+		try {
+			BufferedReader entrada = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			String linha;
+			while (true) {
+				linha = entrada.readLine();
+				if (linha.trim().equals("")) {
+					System.out.println("Conexao encerrada!!!");
+					break;
+				}
+				System.out.println();
+				System.out.println(linha);
+				System.out.print("...> ");
+			}
+			done = true;
+		} catch (IOException ex) {
+			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+		}
 	}
 
 	private void initialize() {
@@ -65,7 +134,8 @@ public class Test {
 					window.frameError.setVisible(true);
 				} else {
 					window.frameGetName.setVisible(false);
-					window.frameChat.setVisible(true);					
+					window.frameChat.setVisible(true);		
+					new Test(true);
 				}
 			}
 		});
