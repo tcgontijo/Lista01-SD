@@ -79,6 +79,8 @@ public class Test extends Thread {
 //		try {
 //			PrintStream output = new PrintStream(connection.getOutputStream());
 			
+				frameChat.setTitle(text.toUpperCase());
+		
 				String myName = text;		
 				
 				output.println(myName);
@@ -98,7 +100,7 @@ public class Test extends Thread {
 		
 		String oldText = this.textArea.getText();
 		
-		oldText += System.lineSeparator() + "[Você] disse:" + line;
+		oldText += System.lineSeparator() + "[VocÃª] disse:" + line;
 		this.textArea.setText(oldText);
 	}
 	
@@ -168,7 +170,7 @@ public class Test extends Thread {
 		frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameError.getContentPane().setLayout(null);
 		
-		JLabel labelError = new JLabel("Texto inválido. Tente novamente!");
+		JLabel labelError = new JLabel("Texto invï¿½lido. Tente novamente!");
 		labelError.setHorizontalAlignment(SwingConstants.CENTER);
 		labelError.setFont(new Font("Arial", Font.PLAIN, 14));
 		labelError.setBounds(24, 12, 416, 16);
