@@ -42,7 +42,7 @@ public class InterfaceGrafica {
                     frameGetName.setVisible(false);
                     frameChat.setVisible(true);
                     try {
-                        logic(textName.getText(), cx);
+                        logic(textName.getText(), cx,new Run(cx,retorno()));
                     } catch (FileNotFoundException fileNotFoundException) {
                         fileNotFoundException.printStackTrace();
                     }
@@ -130,6 +130,12 @@ public class InterfaceGrafica {
         textArea.setEditable(false);
         textArea.setBounds(24, 37, 416, 180);
         frameChat.getContentPane().add(textArea);
+
+        this.mostrarNome(frameGetName);
+    }
+
+    private InterfaceGrafica retorno() {
+        return this;
     }
 
     public void getText(String text, ConexaoServidor cx) throws FileNotFoundException {
@@ -143,16 +149,18 @@ public class InterfaceGrafica {
         this.textArea.setText(oldText);
     }
 
-    public void escondeNome() {
-        this.frameGetName.setVisible(true);
+    public void mostrarNome(JFrame tela) {
+        tela.setVisible(true);
     }
 
-    public void logic(String text,ConexaoServidor cx) throws FileNotFoundException {
+    public void logic(String text, ConexaoServidor cx, Run run) throws FileNotFoundException {
 
         this.frameChat.setTitle(text.toUpperCase());
 
         String myName = text;
 
         cx.output(myName);
+
+        run.start();
     }
 }

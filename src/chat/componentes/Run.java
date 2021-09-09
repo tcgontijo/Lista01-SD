@@ -9,11 +9,10 @@ import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Run {
+public class Run  extends Thread{
 
-    private static boolean done = false;
 
-    public void run(ConexaoServidor conexaoServidor, InterfaceGrafica interfaceGrafica) {
+    public Run(ConexaoServidor conexaoServidor, InterfaceGrafica interfaceGrafica) {
         try {
             BufferedReader input = new BufferedReader(new InputStreamReader(conexaoServidor.getConnection().getInputStream()));
             String line;
@@ -34,7 +33,6 @@ public class Run {
                 System.out.println();
                 System.out.println(line);
             }
-            done = true;
         } catch (IOException ex) {
             Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
         }
