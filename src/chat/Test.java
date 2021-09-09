@@ -51,15 +51,6 @@ public class Test extends Thread {
 		
 		initialize();
 	}
-	
-//	public Test(Socket connection) {
-//		this.connection = connection;
-//		try {
-//			this.output = new PrintStream(this.connection.getOutputStream());
-//		} catch (IOException ex) {
-//			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
-//		}
-//	}
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -75,23 +66,11 @@ public class Test extends Thread {
 	}
 	
 	public void logic(String text, boolean flag) {
-//		Socket connection;
-//		try {
-//			PrintStream output = new PrintStream(connection.getOutputStream());
-			
 				frameChat.setTitle(text.toUpperCase());
 		
 				String myName = text;		
-				
 				output.println(myName);
-				
 				window.start();
-
-//			String line = text;
-//			output.println(line);
-//		} catch (IOException ex) {
-//			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
-//		}
 	}
 	
 	public void getText(String text) {
@@ -100,7 +79,7 @@ public class Test extends Thread {
 		
 		String oldText = this.textArea.getText();
 		
-		oldText += System.lineSeparator() + "[VocÃª] disse:" + line;
+		oldText += System.lineSeparator() + "[Você] disse:" + line;
 		this.textArea.setText(oldText);
 	}
 	
