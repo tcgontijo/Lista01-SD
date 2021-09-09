@@ -10,12 +10,17 @@ import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingConstants;
 
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JScrollPane;
@@ -25,22 +30,36 @@ import java.awt.Color;
 import javax.swing.ListSelectionModel;
 import javax.swing.JScrollBar;
 import java.awt.TextArea;
+import java.awt.event.KeyAdapter;
+import java.awt.Scrollbar;
+import javax.swing.JSpinner;
+import javax.swing.JSlider;
+import javax.swing.JFormattedTextField;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 
 public class Test extends Thread {
 
 	private static boolean done = false;
-	
+	//private static List<String> nomesClientes = new ArrayList<>();
+	private static String[] nomesClientes;
+
 	private static Test window;
+
 	private JFrame frameChat;
 	private JFrame frameGetName;
 	private JFrame frameError;
 	private JTextField textField;
 	private JTextField textName;
-	private Socket connection;
 	private TextArea textArea;
-	
-	PrintStream output;
-	
+
+	private Socket connection;
+	private PrintStream output;
+	// private BufferedReader input;
+	private ObjectInputStream input;
+
+	private JComboBox<String> selectUsers;
+
 	public Test() {
 		try {
 			this.connection = new Socket("localhost", 2000);
@@ -48,10 +67,10 @@ public class Test extends Thread {
 		} catch (IOException ex) {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		
+
 		initialize();
 	}
-	
+
 //	public Test(Socket connection) {
 //		this.connection = connection;
 //		try {
@@ -73,19 +92,35 @@ public class Test extends Thread {
 			}
 		});
 	}
-	
-	public void logic(String text, boolean flag) {
+
+	public void logic(String text) {
 //		Socket connection;
 //		try {
 //			PrintStream output = new PrintStream(connection.getOutputStream());
-			
-				frameChat.setTitle(text.toUpperCase());
+
+		frameChat.setTitle(text.toUpperCase());
+
+		String myName = text;
+
+		output.println(myName);
+		String[] nomes = null;
+		try {
+			input = new ObjectInputStream(this.connection.getInputStream());
+			nomes = (String[]) input.readObject();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-				String myName = text;		
-				
-				output.println(myName);
-				
-				window.start();
+		nomesClientes = nomes;
+
+		for (String nome : nomes) {
+			selectUsers.addItem(nome.toUpperCase());
+		}
+
+		window.start();
 
 //			String line = text;
 //			output.println(line);
@@ -93,34 +128,36 @@ public class Test extends Thread {
 //			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
 //		}
 	}
-	
+
 	public void getText(String text) {
 		String line = text;
 		this.output.println(line);
-		
+
+		this.output.println(this.selectUsers.getSelectedItem());
+
 		String oldText = this.textArea.getText();
-		
+
 		oldText += System.lineSeparator() + "[Você] disse:" + line;
 		this.textArea.setText(oldText);
 	}
-	
+
 	public void run() {
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
 			String line;
-			
+
 			while (true) {
 				line = input.readLine();
-				
+
 				if (line.trim().equals("")) {
 					System.out.println("Conexao encerrada!!!");
 					break;
 				}
-				
+
 				String oldText = this.textArea.getText();
-				
-				oldText += System.lineSeparator() + line; 
-				
+
+				oldText += System.lineSeparator() + line;
+
 				this.textArea.setText(oldText);
 				System.out.println();
 				System.out.println(line);
@@ -132,21 +169,44 @@ public class Test extends Thread {
 	}
 
 	private void initialize() {
+
+		/**
+		 * Tela de captura do nome do usuário
+		 */
 		frameGetName = new JFrame();
 		frameGetName.setBounds(100, 100, 480, 139);
 		frameGetName.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameGetName.getContentPane().setLayout(null);
-		
-		JLabel labelName = new JLabel("Informe seu nome:");
-		labelName.setFont(new Font("Arial", Font.PLAIN, 14));
-		labelName.setBounds(24, 12, 120, 16);
-		frameGetName.getContentPane().add(labelName);
-		
+
+		/**
+		 * Componentes da tela de caputura do nome do usuário
+		 */
+
+		JLabel labelInformeNome = new JLabel("Informe seu nome:");
+		labelInformeNome.setFont(new Font("Arial", Font.PLAIN, 14));
+		labelInformeNome.setBounds(24, 12, 120, 16);
+		frameGetName.getContentPane().add(labelInformeNome);
+
 		textName = new JTextField();
+		textName.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (textName.getText().equals("")) {
+						window.frameGetName.setVisible(false);
+						window.frameError.setVisible(true);
+					} else {
+						window.frameGetName.setVisible(false);
+						window.frameChat.setVisible(true);
+						logic(textName.getText());
+					}
+				}
+			}
+		});
 		textName.setBounds(144, 12, 296, 20);
 		frameGetName.getContentPane().add(textName);
 		textName.setColumns(10);
-		
+
 		JButton btnIn = new JButton("Entrar");
 		btnIn.addMouseListener(new MouseAdapter() {
 			@Override
@@ -156,70 +216,109 @@ public class Test extends Thread {
 					window.frameError.setVisible(true);
 				} else {
 					window.frameGetName.setVisible(false);
-					window.frameChat.setVisible(true);		
-					logic(textName.getText(), true);
+					window.frameChat.setVisible(true);
+					logic(textName.getText());
 				}
 			}
 		});
 		btnIn.setFont(new Font("Arial", Font.PLAIN, 14));
 		btnIn.setBounds(187, 60, 90, 22);
 		frameGetName.getContentPane().add(btnIn);
-		
+
+		/**
+		 * Tela de erro
+		 */
+
 		frameError = new JFrame();
 		frameError.setBounds(100, 100, 480, 139);
 		frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameError.getContentPane().setLayout(null);
-		
-		JLabel labelError = new JLabel("Texto inv�lido. Tente novamente!");
+
+		JLabel labelError = new JLabel("Texto inválido. Tente novamente!");
 		labelError.setHorizontalAlignment(SwingConstants.CENTER);
 		labelError.setFont(new Font("Arial", Font.PLAIN, 14));
 		labelError.setBounds(24, 12, 416, 16);
 		frameError.getContentPane().add(labelError);
-		
+
 		JButton btnReturnGetName = new JButton("Fechar");
 		btnReturnGetName.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				window.frameGetName.setVisible(true);
-				window.frameError.setVisible(false);		
+				window.frameError.setVisible(false);
 			}
 		});
 		btnReturnGetName.setFont(new Font("Arial", Font.PLAIN, 14));
 		btnReturnGetName.setBounds(187, 60, 90, 22);
 		frameError.getContentPane().add(btnReturnGetName);
-		
+
+		/**
+		 * Tela do chat
+		 */
+
 		frameChat = new JFrame();
 		frameChat.setBounds(100, 100, 480, 339);
 		frameChat.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameChat.getContentPane().setLayout(null);
-		
-		
+
 		JLabel labelChat = new JLabel("Conversa:");
 		labelChat.setHorizontalAlignment(SwingConstants.LEFT);
 		labelChat.setFont(new Font("Arial", Font.PLAIN, 14));
 		labelChat.setBounds(24, 12, 416, 14);
 		frameChat.getContentPane().add(labelChat);
-		
+
 		JLabel labelUsers = new JLabel("Conectados:");
 		labelUsers.setFont(new Font("Arial", Font.PLAIN, 14));
 		labelUsers.setBounds(24, 232, 87, 14);
 		frameChat.getContentPane().add(labelUsers);
-		
+
 		JLabel labelInput = new JLabel("Digite:");
 		labelInput.setFont(new Font("Arial", Font.PLAIN, 14));
 		labelInput.setBounds(24, 262, 87, 16);
 		frameChat.getContentPane().add(labelInput);
-		
-		JComboBox comboBox = new JComboBox();
-		comboBox.setModel(new DefaultComboBoxModel(new String[] {"TESTE 1", "TESTE 2", "TESTE 3"}));
-		comboBox.setBounds(109, 230, 150, 20);
-		frameChat.getContentPane().add(comboBox);
-		
+
+		selectUsers = new JComboBox<>();
+		selectUsers.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				System.out.println("clique no select");
+			}
+		});
+		selectUsers.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				System.out.println("clique no select");
+				selectUsers.removeAllItems();
+				for (String nome : nomesClientes) {
+					selectUsers.addItem(nome.toUpperCase());
+					System.out.println(nome);
+				}
+			}
+		});
+
+//		
+		// String[] teste = new String[] { "todos", "joao", "maria" };
+//			
+//		for (String nome : teste) {
+//			selectUsers.addItem(nome.toUpperCase());			
+//		}
+
+		selectUsers.setBounds(109, 230, 150, 20);
+		frameChat.getContentPane().add(selectUsers);
+
 		textField = new JTextField();
+		textField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					getText(textField.getText());
+					textField.setText("");
+				}
+			}
+		});
 		textField.setBounds(68, 261, 273, 20);
 		frameChat.getContentPane().add(textField);
 		textField.setColumns(10);
-		
+
 		JButton btnNewButton = new JButton("Enviar");
 		btnNewButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -231,12 +330,12 @@ public class Test extends Thread {
 		btnNewButton.setFont(new Font("Arial", Font.PLAIN, 14));
 		btnNewButton.setBounds(351, 260, 89, 22);
 		frameChat.getContentPane().add(btnNewButton);
-		
+
 		textArea = new TextArea();
 		textArea.setFont(new Font("Arial", Font.PLAIN, 12));
 		textArea.setForeground(Color.BLACK);
 		textArea.setEditable(false);
-		textArea.setBounds(24, 37, 416, 180);
+		textArea.setBounds(10, 32, 416, 180);
 		frameChat.getContentPane().add(textArea);
 	}
 }
