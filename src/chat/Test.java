@@ -25,6 +25,8 @@ import java.awt.Color;
 import javax.swing.ListSelectionModel;
 import javax.swing.JScrollBar;
 import java.awt.TextArea;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 public class Test extends Thread {
 
@@ -79,7 +81,7 @@ public class Test extends Thread {
 		
 		String oldText = this.textArea.getText();
 		
-		oldText += System.lineSeparator() + "[Você] disse:" + line;
+		oldText += System.lineSeparator() + "[Você] disse: " + line;
 		this.textArea.setText(oldText);
 	}
 	
@@ -149,7 +151,7 @@ public class Test extends Thread {
 		frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameError.getContentPane().setLayout(null);
 		
-		JLabel labelError = new JLabel("Texto invï¿½lido. Tente novamente!");
+		JLabel labelError = new JLabel("Texto inválido. Tente novamente!");
 		labelError.setHorizontalAlignment(SwingConstants.CENTER);
 		labelError.setFont(new Font("Arial", Font.PLAIN, 14));
 		labelError.setBounds(24, 12, 416, 16);
@@ -176,7 +178,7 @@ public class Test extends Thread {
 		JLabel labelChat = new JLabel("Conversa:");
 		labelChat.setHorizontalAlignment(SwingConstants.LEFT);
 		labelChat.setFont(new Font("Arial", Font.PLAIN, 14));
-		labelChat.setBounds(24, 12, 416, 14);
+		labelChat.setBounds(24, 12, 286, 14);
 		frameChat.getContentPane().add(labelChat);
 		
 		JLabel labelUsers = new JLabel("Conectados:");
@@ -194,11 +196,6 @@ public class Test extends Thread {
 		comboBox.setBounds(109, 230, 150, 20);
 		frameChat.getContentPane().add(comboBox);
 		
-		textField = new JTextField();
-		textField.setBounds(68, 261, 273, 20);
-		frameChat.getContentPane().add(textField);
-		textField.setColumns(10);
-		
 		JButton btnNewButton = new JButton("Enviar");
 		btnNewButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -211,7 +208,13 @@ public class Test extends Thread {
 		btnNewButton.setBounds(351, 260, 89, 22);
 		frameChat.getContentPane().add(btnNewButton);
 		
+		textField = new JTextField();
+		textField.setBounds(68, 261, 273, 20);
+		frameChat.getContentPane().add(textField);
+		textField.setColumns(10);
+		
 		textArea = new TextArea();
+		textArea.setBackground(Color.WHITE);
 		textArea.setFont(new Font("Arial", Font.PLAIN, 12));
 		textArea.setForeground(Color.BLACK);
 		textArea.setEditable(false);

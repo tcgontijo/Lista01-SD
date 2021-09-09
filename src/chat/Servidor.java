@@ -17,6 +17,9 @@ public class Servidor extends Thread {
 	
 	private PrintWriter printWriter;
 	private static FileWriter fileWriter;
+	
+	private BufferedReader input;
+	private PrintStream output;
 
 	public Servidor(Socket socket) {
 		this.connection = socket;
@@ -24,6 +27,9 @@ public class Servidor extends Thread {
 		try {
 			fileWriter = new FileWriter("logs.txt", true);
 			printWriter = new PrintWriter(fileWriter);
+			
+			input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
+			output = new PrintStream(this.connection.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -50,10 +56,7 @@ public class Servidor extends Thread {
 	}
 
 	public void run() {
-		try {
-			BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			PrintStream output = new PrintStream(connection.getOutputStream());
-			
+		try {			
 			String log = "";
 			portRemoteClient = connection.getPort();
 			addressClient = connection.getInetAddress();
@@ -65,6 +68,7 @@ public class Servidor extends Thread {
 			
 			clients.add(output);
 			String line = input.readLine();
+			
 			while ((line != null) && (!line.trim().equals(""))) {
 				log = createLineLog(line);
 				printWriter.println(log);
@@ -73,26 +77,25 @@ public class Servidor extends Thread {
 				sendToAll(output, " disse: ", line);
 				line = input.readLine();
 			}
-			sendToAll(output, " saiu ", " do Chat!");
-			clients.remove(output);
-			connection.close();
+			
 		} catch (IOException ex) {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+			
+			try {
+				sendToAll(output, " saiu ", " do Chat!");
+				clients.remove(output);
+				connection.close();			
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public String createLineLog(String line) {
-		String log = "";
-		try {
-			@SuppressWarnings("static-access")
-			String hostName = "<" + addressClient.getLocalHost().getHostName() + ">";
-			String hostIp = "<" + addressClient.getHostAddress() + ">";
-			
-			log = myName + "@" + hostIp + "@<" + portRemoteClient + ">#<" + line + ">";
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+		String hostName = "<" + myName + ">";
+		String hostIp = "<" + addressClient.getHostAddress() + ">";
 		
+		String log = hostName + "@" + hostIp + "@<" + portRemoteClient + ">#<" + line + ">";
 		return log;
 	}
 
