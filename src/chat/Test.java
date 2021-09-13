@@ -41,7 +41,6 @@ import java.awt.event.ItemEvent;
 public class Test extends Thread {
 
 	private static boolean done = false;
-	//private static List<String> nomesClientes = new ArrayList<>();
 	private static String[] nomesClientes;
 
 	private static Test window;
@@ -55,8 +54,9 @@ public class Test extends Thread {
 
 	private Socket connection;
 	private PrintStream output;
-	// private BufferedReader input;
-	private ObjectInputStream input;
+	private BufferedReader input;
+	private String myName;
+	private String nomes;
 
 	private JComboBox<String> selectUsers;
 
@@ -70,15 +70,6 @@ public class Test extends Thread {
 
 		initialize();
 	}
-
-//	public Test(Socket connection) {
-//		this.connection = connection;
-//		try {
-//			this.output = new PrintStream(this.connection.getOutputStream());
-//		} catch (IOException ex) {
-//			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
-//		}
-//	}
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -94,62 +85,89 @@ public class Test extends Thread {
 	}
 
 	public void logic(String text) {
-//		Socket connection;
-//		try {
-//			PrintStream output = new PrintStream(connection.getOutputStream());
 
 		frameChat.setTitle(text.toUpperCase());
 
-		String myName = text;
-
+		myName = text;
+		/**
+		 * 1º Stream => Remessa do nome do Cliente
+		 */
 		output.println(myName);
-		String[] nomes = null;
-		try {
-			input = new ObjectInputStream(this.connection.getInputStream());
-			nomes = (String[]) input.readObject();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		nomesClientes = nomes;
 
-		for (String nome : nomes) {
-			selectUsers.addItem(nome.toUpperCase());
-		}
+		getUsersList();
+		updateUsersList();
 
 		window.start();
 
-//			String line = text;
-//			output.println(line);
-//		} catch (IOException ex) {
-//			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
-//		}
+	}
+
+	public void getUsersList() {
+		try {
+			input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
+			/**
+			 * 2ª Stream => Coleta da lista de usuários
+			 */
+			nomes = input.readLine();
+
+			nomesClientes = nomes.split(",");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void updateUsersList() {
+
+		this.selectUsers.removeAllItems();
+		this.selectUsers.addItem("TODOS");
+		for (String nome : nomesClientes) {
+			System.out.println(nome);
+			if (!nome.equalsIgnoreCase(myName))
+				selectUsers.addItem(nome.toUpperCase());
+		}
 	}
 
 	public void getText(String text) {
+
 		String line = text;
+		/**
+		 * 3º Stream => Remessa da mensagem do cliente
+		 */
 		this.output.println(line);
 
+		/**
+		 * 4º Stream => Se requereu lista então servidor retorna a lista de clientes
+		 */
+
+//		if (line.equals("**lista**")) {
+//			getUsersList();
+//			updateUsersList();
+//		} else {
+
+		/**
+		 * 4º Stream => Se não requereu lista então remete o destinatário
+		 */
 		this.output.println(this.selectUsers.getSelectedItem());
 
 		String oldText = this.textArea.getText();
 
-		oldText += System.lineSeparator() + "[Você] disse:" + line;
+		oldText += System.lineSeparator() + "[Você] disse para [" + this.selectUsers.getSelectedItem() + "]: " + line;
 		this.textArea.setText(oldText);
+//		}
 	}
 
 	public void run() {
 		try {
-			BufferedReader input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
+			input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
 			String line;
 
 			while (true) {
+				/**
+				 * 5ª Stream => Coleta de mensagens dos outros clientes
+				 */
 				line = input.readLine();
 
-				if (line.trim().equals("")) {
+				if (line.trim().equals("") || line.equals(this.nomes)) {
 					System.out.println("Conexao encerrada!!!");
 					break;
 				}
@@ -278,30 +296,18 @@ public class Test extends Thread {
 		frameChat.getContentPane().add(labelInput);
 
 		selectUsers = new JComboBox<>();
-		selectUsers.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				System.out.println("clique no select");
-			}
-		});
-		selectUsers.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				System.out.println("clique no select");
-				selectUsers.removeAllItems();
-				for (String nome : nomesClientes) {
-					selectUsers.addItem(nome.toUpperCase());
-					System.out.println(nome);
-				}
-			}
-		});
 
-//		
-		// String[] teste = new String[] { "todos", "joao", "maria" };
-//			
-//		for (String nome : teste) {
-//			selectUsers.addItem(nome.toUpperCase());			
-//		}
-
+		/**
+		 * Listener de clique no select
+		 */
+		// selectUsers.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseClicked(MouseEvent e) {
+//				System.out.println("clique no select");
+//				// updateUsersList();
+//				getText("**lista**");
+//			}
+//		});
 		selectUsers.setBounds(109, 230, 150, 20);
 		frameChat.getContentPane().add(selectUsers);
 
