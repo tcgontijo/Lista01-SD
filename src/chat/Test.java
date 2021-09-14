@@ -41,9 +41,9 @@ import java.awt.event.ItemEvent;
 public class Test extends Thread {
 
 	private static boolean done = false;
-	private static String[] nomesClientes;
-
 	private static Test window;
+
+	private String[] nomesClientes;
 
 	private JFrame frameChat;
 	private JFrame frameGetName;
@@ -59,11 +59,13 @@ public class Test extends Thread {
 	private String nomes;
 
 	private JComboBox<String> selectUsers;
+	private String destinatario;
 
 	public Test() {
 		try {
 			this.connection = new Socket("localhost", 2000);
 			this.output = new PrintStream(this.connection.getOutputStream());
+			this.input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
 		} catch (IOException ex) {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -86,16 +88,19 @@ public class Test extends Thread {
 
 	public void logic(String text) {
 
-		frameChat.setTitle(text.toUpperCase());
+		this.frameChat.setTitle(text.toUpperCase());
 
-		myName = text;
+		this.myName = text;
 		/**
 		 * 1º Stream => Remessa do nome do Cliente
 		 */
-		output.println(myName);
+		this.output.println(myName);
 
-		getUsersList();
-		updateUsersList();
+		/**
+		 * 2ª Stream => Coleta da lista de usuários
+		 */
+		this.getUsersList();
+		this.updateUsersList();
 
 		window.start();
 
@@ -103,11 +108,9 @@ public class Test extends Thread {
 
 	public void getUsersList() {
 		try {
-			input = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
-			/**
-			 * 2ª Stream => Coleta da lista de usuários
-			 */
 			nomes = input.readLine();
+			
+			nomes = nomes.substring(3);
 
 			nomesClientes = nomes.split(",");
 
@@ -129,29 +132,20 @@ public class Test extends Thread {
 
 	public void getText(String text) {
 
-		String line = text;
 		/**
 		 * 3º Stream => Remessa da mensagem do cliente
 		 */
-		this.output.println(line);
+		this.output.println(text);
 
 		/**
-		 * 4º Stream => Se requereu lista então servidor retorna a lista de clientes
+		 * 4º Stream => remete o destinatário
 		 */
-
-//		if (line.equals("**lista**")) {
-//			getUsersList();
-//			updateUsersList();
-//		} else {
-
-		/**
-		 * 4º Stream => Se não requereu lista então remete o destinatário
-		 */
-		this.output.println(this.selectUsers.getSelectedItem());
+		destinatario = (String) this.selectUsers.getSelectedItem();
+		this.output.println(destinatario);
 
 		String oldText = this.textArea.getText();
 
-		oldText += System.lineSeparator() + "[Você] disse para [" + this.selectUsers.getSelectedItem() + "]: " + line;
+		oldText += System.lineSeparator() + "[Você] disse para [" + destinatario + "]: " + text;
 		this.textArea.setText(oldText);
 //		}
 	}
@@ -163,11 +157,16 @@ public class Test extends Thread {
 
 			while (true) {
 				/**
-				 * 5ª Stream => Coleta de mensagens dos outros clientes
+				 * 5ª Stream => Coleta de mensagens do servidor
 				 */
-				line = input.readLine();
+				line = (String) input.readLine();
 
-				if (line.trim().equals("") || line.equals(this.nomes)) {
+				if (line.startsWith("@l")) {
+					getUsersList();
+					updateUsersList();
+				} else {
+				if (line.trim().equals("")) {
+
 					System.out.println("Conexao encerrada!!!");
 					break;
 				}
@@ -180,8 +179,11 @@ public class Test extends Thread {
 				System.out.println();
 				System.out.println(line);
 			}
+			}
 			done = true;
-		} catch (IOException ex) {
+		} catch (
+
+		IOException ex) {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}

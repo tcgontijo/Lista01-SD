@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 public class Servidor extends Thread {
 	private static Map<String, PrintStream> clientes = new HashMap<>();
-	private static String listaNomesClientes;
+	private static String listaNomesClientes = "@l";
 	private Socket socketCliente;
 	private String nomeCliente;
 
@@ -23,7 +23,7 @@ public class Servidor extends Thread {
 
 	public static void main(String[] args) {
 		ServerSocket servidor;
-		listaNomesClientes = "";
+		//listaNomesClientes = "";
 		try {
 			servidor = new ServerSocket(2000);
 			while (true) {
@@ -59,6 +59,7 @@ public class Servidor extends Thread {
 			/**
 			 * 2ª Stream => Remessa da lista de usuários
 			 */
+			sendUserList(escritor);
 			escritor.println(listaNomesClientes);
 
 			/**
@@ -95,7 +96,16 @@ public class Servidor extends Thread {
 		}
 	}
 
-	private void sendToOne(String destinatario, String acao, String msg) {
+	public void sendUserList(PrintStream escritor) {
+		
+		//escritor.println("**lista**");
+		
+		for (PrintStream cliente : clientes.values()) {
+			cliente.println(listaNomesClientes);
+		}
+	}
+
+	public void sendToOne(String destinatario, String acao, String msg) {
 
 		/**
 		 * 5ª Stream => Remessa de mensagens (privada)
