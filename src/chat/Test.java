@@ -57,6 +57,7 @@ public class Test extends Thread {
 	private BufferedReader input;
 	private String myName;
 	private String nomes;
+	private Boolean primaryList;
 
 	private JComboBox<String> selectUsers;
 	private String destinatario;
@@ -70,6 +71,7 @@ public class Test extends Thread {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
+		this.primaryList = true;
 		initialize();
 	}
 
@@ -99,16 +101,23 @@ public class Test extends Thread {
 		/**
 		 * 2ª Stream => Coleta da lista de usuários
 		 */
-		this.getUsersList();
+		this.getUsersList("");
 		this.updateUsersList();
 
 		window.start();
 
 	}
 
-	public void getUsersList() {
+	public void getUsersList(String listNames) {
 		try {
-			nomes = input.readLine();
+			nomes = listNames;
+			
+			if (primaryList) {
+				nomes = input.readLine();
+				primaryList = false;
+			}
+			
+			System.out.println(nomes);
 			
 			nomes = nomes.substring(3);
 
@@ -124,7 +133,6 @@ public class Test extends Thread {
 		this.selectUsers.removeAllItems();
 		this.selectUsers.addItem("TODOS");
 		for (String nome : nomesClientes) {
-			System.out.println(nome);
 			if (!nome.equalsIgnoreCase(myName))
 				selectUsers.addItem(nome.toUpperCase());
 		}
@@ -145,7 +153,7 @@ public class Test extends Thread {
 
 		String oldText = this.textArea.getText();
 
-		oldText += System.lineSeparator() + "[Você] disse para [" + destinatario + "]: " + text;
+		oldText += System.lineSeparator() + "[Voc�] disse para [" + destinatario + "]: " + text;
 		this.textArea.setText(oldText);
 //		}
 	}
@@ -160,9 +168,12 @@ public class Test extends Thread {
 				 * 5ª Stream => Coleta de mensagens do servidor
 				 */
 				line = (String) input.readLine();
+				
+				System.out.println("line -> " + line);
 
 				if (line.startsWith("@l")) {
-					getUsersList();
+					System.out.println("Caiu no IF");
+					getUsersList(line);
 					updateUsersList();
 				} else {
 				if (line.trim().equals("")) {
