@@ -1,13 +1,12 @@
 package chat;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,8 +16,33 @@ public class Servidor extends Thread {
 	private Socket socketCliente;
 	private String nomeCliente;
 
+	//TODO Inicio Codigo Log
+	private String myName;
+	private Integer portRemoteClient;
+	private InetAddress addressClient;
+
+	private PrintWriter printWriter;
+	private static FileWriter fileWriter;
+
+	private BufferedReader input;
+	private PrintStream output;
+	//TODO FIM Codigo Log
+
 	public Servidor(Socket socketCliente) {
 		this.socketCliente = socketCliente;
+
+		//TODO Inicio Codigo Log
+		try {
+			fileWriter = new FileWriter("logs.txt", true);
+			printWriter = new PrintWriter(fileWriter);
+
+			input = new BufferedReader(new InputStreamReader(this.socketCliente.getInputStream()));
+			output = new PrintStream(this.socketCliente.getOutputStream());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//TODO FIM Codigo Log
+
 	}
 
 	public static void main(String[] args) {
@@ -29,8 +53,10 @@ public class Servidor extends Thread {
 			while (true) {
 				System.out.print("Esperando conectar...");
 				Socket cliente = servidor.accept();
+
 				System.out.println(" Conectou!");
 				Thread t = new Servidor(cliente);
+
 				t.start();
 			}
 		} catch (IOException ex) {
@@ -47,6 +73,17 @@ public class Servidor extends Thread {
 			 * 1º Stream => Coleta do nome do Cliente
 			 */
 			nomeCliente = leitor.readLine();
+
+			//TODO Inicio Codigo Log
+//			String log = "";
+//			portRemoteClient = socketCliente.getPort();
+//			addressClient = socketCliente.getInetAddress();
+//
+//			myName = nomeCliente;
+//			if (myName == null) {
+//				return;
+//			}
+			//TODO FIM Codigo Log
 
 			if (listaNomesClientes.equals(""))
 				listaNomesClientes = nomeCliente;
@@ -69,27 +106,31 @@ public class Servidor extends Thread {
 
 			String destinatario;
 
-			while ((msg != null) && (!msg.trim().equals(""))) {
 
-				/**
-				 * 4º Stream => Coleta do destinatário da mensagem
-				 */
-				destinatario = leitor.readLine();
-				if (clientes.containsKey(destinatario.toUpperCase())) {
-					sendToOne(destinatario, " disse: ", msg);
-					msg = leitor.readLine();
-				} else {
-					sendToAll(escritor, " disse: ", msg);
-					msg = leitor.readLine();
-
+				while ((msg != null) && (!msg.trim().equals(""))) {
+				//TODO Inicio Codigo Log
+					String	log = createLineLog(msg);
+					printWriter.println(log);
+					printWriter.flush();
+				//TODO FIM Codigo Log
+					/**
+					 * 4º Stream => Coleta do destinatário da mensagem
+					 */
+					destinatario = leitor.readLine();
+					if (clientes.containsKey(destinatario.toUpperCase())) {
+						sendToOne(destinatario, " disse: ", msg);
+						msg = leitor.readLine();
+					} else {
+						sendToAll(escritor, " disse: ", msg);
+						msg = leitor.readLine();
+					}
 				}
-			}
 
-			sendToAll(escritor, " saiu ", "do Chat!");
+				sendToAll(escritor, " saiu ", "do Chat!");
 
-			clientes.remove(nomeCliente);
-			listaNomesClientes.replace(nomeCliente + ",", "");
-			socketCliente.close();
+				clientes.remove(nomeCliente);
+				listaNomesClientes.replace(nomeCliente + ",", "");
+				socketCliente.close();
 
 		} catch (IOException ex) {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
@@ -132,4 +173,13 @@ public class Servidor extends Thread {
 			}
 		}
 	}
+	//TODO Inicio Codigo Log
+	public String createLineLog(String line) {
+		String hostName = "<" + myName + ">";
+		String hostIp = "<" + addressClient.getHostAddress() + ">";
+
+		String log = hostName + "@" + hostIp + "@<" + portRemoteClient + ">#<" + line + ">";
+		return log;
+	}
+	//TODO FIM Codigo Log
 }
