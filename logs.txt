@@ -1,0 +1,13 @@
+<Tulio>@<127.0.0.1>@<64391>#<Opa geral!>
+<Murillo>@<127.0.0.1>@<64390>#<Opa geral 3!>
+<Murillo>@<127.0.0.1>@<64390>#<Fala, Tulio!>
+<Tulio>@<127.0.0.1>@<64391>#<Fala Murillo!>
+<Flavius>@<127.0.0.1>@<57726>#<Cheguei galera!>
+<Flavius>@<127.0.0.1>@<57726>#<Opa!>
+<Flavius>@<127.0.0.1>@<57726>#<Bem cara?>
+<Flavius>@<127.0.0.1>@<57726>#<E aí?>
+<Murillo>@<127.0.0.1>@<64390>#<Oloco>
+<Tulio>@<127.0.0.1>@<64391>#<Que isso>
+<Tulio>@<127.0.0.1>@<64391>#<Zeramos o game>
+<Murillo>@<127.0.0.1>@<64390>#<Tulio disse que zeramos o game>
+<Flavius>@<127.0.0.1>@<57726>#<Murillo dise que você disse que zeramos o game>

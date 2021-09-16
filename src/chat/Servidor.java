@@ -8,11 +8,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Servidor extends Thread {
-	private static Map<String, PrintStream> clientes = new HashMap<>();
+	private static Map<String, PrintStream> clients = new HashMap<>();
 	private static String listClientsName = "@l";
-	private Socket socketCliente;
+	private Socket clientSocket;
 
-	//TODO Inicio Codigo Log
 	private String clientName;
 	private Integer portRemoteClient;
 	private InetAddress addressClient;
@@ -22,22 +21,19 @@ public class Servidor extends Thread {
 
 	private BufferedReader reader;
 	private PrintStream writer;
-	//TODO FIM Codigo Log
 
 	public Servidor(Socket socketCliente) {
-		this.socketCliente = socketCliente;
+		this.clientSocket = socketCliente;
 
-		//TODO Inicio Codigo Log
 		try {
-//			fileWriter = new FileWriter("logs.txt", true);
-//			printWriter = new PrintWriter(fileWriter);
+			fileWriter = new FileWriter("logs.txt", true);
+			printWriter = new PrintWriter(fileWriter);
 
-			reader = new BufferedReader(new InputStreamReader(this.socketCliente.getInputStream()));
-			writer = new PrintStream(this.socketCliente.getOutputStream());
+			reader = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
+			writer = new PrintStream(this.clientSocket.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		//TODO FIM Codigo Log
 
 	}
 
@@ -61,106 +57,84 @@ public class Servidor extends Thread {
 	}
 
 	public void run() {
-		try {
-//			BufferedReader leitor = new BufferedReader(new InputStreamReader(socketCliente.getInputStream()));
-			/**
-			 * 1Âº Stream => Coleta do nome do Cliente
-			 */
+		try {			
+			// 1ª Stream => Coleta do nome do Cliente
 			clientName = reader.readLine();
 
-			//TODO Inicio Codigo Log
-//			String log = "";
-//			portRemoteClient = socketCliente.getPort();
-//			addressClient = socketCliente.getInetAddress();
-//
-//			myName = nomeCliente;
-//			if (myName == null) {
-//				return;
-//			}
-			//TODO FIM Codigo Log
+			portRemoteClient = clientSocket.getPort();
+			addressClient = clientSocket.getInetAddress();
 
 			listClientsName += "," + clientName;
 			
-//			PrintStream escritor = new PrintStream(socketCliente.getOutputStream());
-			clientes.put(clientName.toUpperCase(), writer);
+			clients.put(clientName.toUpperCase(), writer);
 
-			/**
-			 * 2Âª Stream => Remessa da lista de usuÃ¡rios
-			 */
+			// 2ª Stream => Remessa da lista de usuários
 			sendUserList();
 
-			/**
-			 * 3Âº Stream => Coleta da mensagem do cliente
-			 */
-			String msg = reader.readLine();
+			// 3ª Stream => Coleta da mensagem do cliente
+			String message = reader.readLine();
 
-			String destinatario;
+			String receiver;
 
+			while ((message != null) && (!message.trim().equals(""))) {
+				String log = createLineLog(message);
+				printWriter.println(log);
+				printWriter.flush();
 
-				while ((msg != null) && (!msg.trim().equals(""))) {
-				//TODO Inicio Codigo Log
-//					String	log = createLineLog(msg);
-//					printWriter.println(log);
-//					printWriter.flush();
-				//TODO FIM Codigo Log
-					/**
-					 * 4Âº Stream => Coleta do destinatÃ¡rio da mensagem
-					 */
-					destinatario = reader.readLine();
-					if (clientes.containsKey(destinatario.toUpperCase())) {
-						sendToOne(destinatario, " disse: ", msg);
-						msg = reader.readLine();
-					} else {
-						sendToAll(writer, " disse: ", msg);
-						msg = reader.readLine();
-					}
+				// 4ª Stream => Coleta do destinário da mensagem
+				receiver = reader.readLine();
+				if (clients.containsKey(receiver.toUpperCase())) {
+					sendToOne(receiver, " disse: ", message);
+					message = reader.readLine();
+				} else {
+					sendToAll(writer, " disse: ", message);
+					message = reader.readLine();
 				}
+			}
 
-				sendToAll(writer, " saiu ", "do Chat!");
-
-				clientes.remove(clientName);
-				listClientsName.replace(clientName + ",", "");
-				socketCliente.close();
-
+			sendToAll(writer, " saiu ", "do Chat!");
+			clients.remove(clientName);
+			listClientsName.replace(clientName + ",", "");
+			clientSocket.close();
 		} catch (IOException ex) {
 			Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
+			
+			try {
+				sendToAll(writer, " saiu ", "do Chat!");
+				clients.remove(clientName);
+				listClientsName.replace(clientName + ",", "");
+				clientSocket.close();
+			} catch (IOException error) {
+				Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, error);
+			}
 		}
 	}
 
 	public void sendUserList() {		
-		for (PrintStream cliente : clientes.values()) {
+		for (PrintStream cliente : clients.values()) {
 			cliente.println(listClientsName);
 		}
 	}
 
-	public void sendToOne(String destinatario, String acao, String msg) {
-
-		/**
-		 * 5Âª Stream => Remessa de mensagens (privada)
-		 */
-		clientes.get(destinatario).println("[" + clientName.toUpperCase() + " (PRIVADO)]" + acao + msg);
-
+	public void sendToOne(String receiver, String action, String message) {
+		// 5ª Stream => Remessa de mensagens (privada)
+		clients.get(receiver).println("[" + clientName.toUpperCase() + " (PRIVADO)]" + action + message);
 	}
 
-	public void sendToAll(PrintStream escritor, String acao, String msg) throws IOException {
-
-		for (PrintStream cliente : clientes.values()) {
-			if (cliente != escritor) {
-				/**
-				 * 5Âª Stream => Remessa de mensagens (geral)
-				 */
-				cliente.println("[" + clientName.toUpperCase() + "]" + acao + msg);
+	public void sendToAll(PrintStream writer, String action, String message) throws IOException {
+		for (PrintStream client : clients.values()) {
+			if (client != writer) {
+				// 5ª Stream => Remessa de mensgens (geral)
+				client.println("[" + clientName.toUpperCase() + "]" + action + message);
 			}
-			if (acao.equals(" saiu ")) {
-				if (cliente == escritor)
-					/**
-					 * 5Âª Stream => Remessa de mensagens (saÃ­da)
-					 */
-					cliente.println("");
+			if (action.equals(" saiu ")) {
+				if (client == writer)
+					// 5ª Stream => Remessa de mensagens (saída)
+					client.println("");
 			}
 		}
 	}
-	//TODO Inicio Codigo Log
+	
 	public String createLineLog(String line) {
 		String hostName = "<" + clientName + ">";
 		String hostIp = "<" + addressClient.getHostAddress() + ">";
@@ -168,5 +142,4 @@ public class Servidor extends Thread {
 		String log = hostName + "@" + hostIp + "@<" + portRemoteClient + ">#<" + line + ">";
 		return log;
 	}
-	//TODO FIM Codigo Log
 }
